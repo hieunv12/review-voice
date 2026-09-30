@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Review Voice</title>
+<style>
+:root{
+  --bg:#0f1115;--panel:#171a21;--panel2:#1e222b;--line:#2a2f3a;--txt:#e7e9ee;--mut:#8b93a3;
+  --acc:#f5b041;--acc2:#ffcf7a;--ok:#4cc38a;--err:#ff6b6b;--chip:#252a35;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+header h1{font-size:16px;margin:0;letter-spacing:.2px}
+header h1 span{color:var(--acc)}
+#status{font-size:12px;color:var(--mut)}
+#status.ready::before{content:"● ";color:var(--ok)}
+#status.loading::before{content:"● ";color:var(--acc)}
+header .sp{flex:1}
+main{display:grid;grid-template-columns:minmax(360px,5fr) 7fr;gap:16px;padding:16px 20px;max-width:1500px;margin:0 auto}
+@media (max-width:980px){main{grid-template-columns:minmax(0,1fr)}}
+main>*{min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);margin:0 0 12px;font-weight:600}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font:inherit}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+#script{min-height:300px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6}
+.row{display:grid;grid-template-columns:1fr 1fr 90px 120px;gap:10px;margin:12px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.chip{background:var(--chip);border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
+.chip:hover{border-color:var(--acc);color:var(--acc2)}
+.chip.native{border-style:dashed}
+button{background:var(--chip);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer;white-space:nowrap}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--acc);color:#1a1300;border-color:var(--acc);font-weight:600}
+button.primary:hover:not(:disabled){background:var(--acc2)}
+button.sm{padding:4px 10px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.prog{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:12px;display:none}
+.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.msg{font-size:12px;color:var(--mut);margin-top:6px}
+.msg:empty{display:none}
+body:not(.adv) #result.none{display:none}
+.msg.err{color:var(--err)}
+.empty{color:var(--mut);text-align:center;padding:60px 10px}
+.full{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.full audio{flex:1;min-width:260px}
+.meta{font-size:12px;color:var(--mut);margin-bottom:12px}
+.dl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.dl a{text-decoration:none}
+.lines{display:flex;flex-direction:column;gap:8px}
+.ln{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:30px 1fr;gap:10px}
+.ln.busy{opacity:.55}
+.ln.playing{border-color:var(--acc)}
+.ln .no{color:var(--mut);font-variant-numeric:tabular-nums;font-size:12px;padding-top:6px}
+.ln .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ln .top select{width:auto;padding:4px 8px;font-size:12px}
+.ln .top .t{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
+.ln .sub{margin-top:6px;font-size:14px}
+.ln .sub[contenteditable]{outline:none;border-radius:6px;padding:2px 4px;margin-left:-4px}
+.ln .sub[contenteditable]:focus{background:var(--panel)}
+.ln details{margin-top:6px}
+.ln summary{font-size:12px;color:var(--mut);cursor:pointer}
+.ln details textarea{margin-top:6px;font-size:13px;min-height:52px}
+.ln audio{height:30px;flex:1;min-width:180px}
+.tag-excited{color:#ffb86b}.tag-playful{color:#7ee0a3}.tag-amazed{color:#8ab4ff}.tag-confident{color:#f5d76e}
+.tag-whispering{color:#c5a3ff}.tag-sad{color:#9aa7bd}.tag-dramatic{color:#ff8fa3}.tag-serious{color:#d0d4dc}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tabs button{border-radius:8px 8px 0 0}
+.tabs button.on{border-color:var(--acc);color:var(--acc2)}
+#lex{min-height:360px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.hint{font-size:12px;color:var(--mut);margin:8px 0 0}
+body:not(.adv) .adv-only{display:none!important}
+body:not(.adv) main{grid-template-columns:minmax(0,1fr);max-width:760px}
+body:not(.adv) #script{min-height:360px}
+.dl .big{padding:10px 18px;font-size:14px}
+.lbl{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.lbl label{margin:0}
+.icons{display:flex;gap:6px}
+.icon{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;font-size:13px}
+.icon svg{width:16px;height:16px;flex:none}
+#btnRender{min-width:200px}
+@media (max-width:640px){
+  body{font-size:15px}
+  header{padding:10px 12px;gap:8px}
+  header h1{font-size:15px}
+  #status{font-size:0}#status::before{font-size:14px}
+  main{padding:10px;gap:10px}
+  .card{padding:12px;border-radius:10px}
+  input,select,textarea{font-size:16px}          /* iOS: <16px là tự zoom khi gõ */
+  #script,body:not(.adv) #script{min-height:40vh;font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .row{grid-template-columns:1fr 1fr}
+  .icon{padding:9px 12px;font-size:14px}
+  .actions{position:sticky;bottom:0;background:var(--panel);padding:10px 0 env(safe-area-inset-bottom);margin-top:2px;z-index:3}
+  .card h2{margin-bottom:10px}
+  #btnRender{width:100%;padding:14px;font-size:16px}
+  .dl{flex-direction:column}
+  .dl a,.dl .big{width:100%}
+  .dl .big{padding:14px;font-size:16px}
+  .full audio{min-width:0;width:100%}
+  .ln{grid-template-columns:1fr;padding:10px}
+  .ln .no{padding:0}
+  .ln audio{min-width:0;width:100%}
+  #projects{max-width:38vw}
+}
+kbd{background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:11px}
+
+/* ─── nav + tiktok ─── */
+.nav{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:2px}
+.nav button{border:0;background:none;padding:5px 12px;border-radius:7px;color:var(--mut)}
+.nav button.on{background:var(--chip);color:var(--acc2)}
+body.view-tt main,body.view-tt #projects,body.view-tt #status{display:none!important}
+body:not(.view-tt) #viewTt{display:none}
+#viewTt{padding:16px 20px;max-width:1500px;margin:0 auto}
+.tt-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;min-width:0}
+.tt-bar input,.tt-bar select{width:auto;padding:6px 10px;font-size:13px}
+.tt-bar button{padding:6px 12px;font-size:13px}
+body:not(.view-tt) #ttBar,body.view-tt>header>.sp{display:none!important}
+.tt-bar #ttQ{flex:1 1 200px;max-width:320px}
+.tt-bar .sp{flex:1}
+.tt-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tt-stats .chip.on{border-color:var(--acc);color:var(--acc2)}
+.tt-stats b{font-weight:600;margin-left:4px;color:var(--mut)}
+.tt-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tt-table{width:100%;border-collapse:collapse}
+.tt-table th{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);font-weight:600;text-align:left;padding:8px 10px;background:var(--panel2);border-bottom:1px solid var(--line);white-space:nowrap}
+.tt-table td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tt-table tr:last-child td{border-bottom:0}
+.tt-table tbody tr:hover{background:#1a1e26}
+.tt-table tr.sel{background:#221d12}
+.tt-table .c{width:32px}
+.tt-table .c input{width:16px;height:16px;accent-color:var(--acc)}
+.tt-table td.v{width:48px}
+.thumb{width:36px;height:64px;border-radius:5px;background:#000;object-fit:cover;display:block;cursor:pointer;border:1px solid var(--line)}
+.tt-table .ttl{font-weight:600;overflow-wrap:anywhere}
+.tt-table .cap{font-size:12px;color:var(--mut);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:520px}
+.tt-table .cap i{color:#8ab4ff;font-style:normal}
+.tt-table .num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--mut);font-size:13px}
+.tt-table .when{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tt-table .when small{display:block;color:var(--mut);font-size:11px}
+.tt-table .act{white-space:nowrap;text-align:right}
+.tt-table .act button{padding:4px 9px;font-size:12px;margin-left:4px}
+.tt-table .act button.del:hover:not(:disabled){border-color:var(--err);color:var(--err)}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap;background:var(--chip);color:var(--mut)}
+.st-scheduled{background:#1d2a40;color:#8ab4ff}.st-posting{background:#3a2e14;color:var(--acc2)}
+.st-posted{background:#153326;color:var(--ok)}.st-failed{background:#3a1b1e;color:var(--err)}
+.err-t{font-size:11px;color:var(--err);margin-top:3px;max-width:260px;overflow-wrap:anywhere}
+.step-t{font-size:11px;color:var(--acc2);margin-top:3px}
+.dev{font-size:12px;color:var(--mut);white-space:nowrap}
+.dev.on::before{content:"● ";color:var(--ok)}
+.dev.off::before{content:"● ";color:var(--err)}
+button.dev{padding:6px 10px}
+.pdev+.pdev{margin-top:14px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.phead span{font-size:12px;color:var(--mut)}
+.phead .sp{flex:1}
+.pf{display:grid;grid-template-columns:1fr auto auto;gap:12px;font-size:12px;color:var(--mut);padding:4px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.pf span:first-child{color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.del:hover:not(:disabled){border-color:var(--err);color:var(--err)}
+.tt-empty{color:var(--mut);text-align:center;padding:50px 10px}
+
+dialog{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:0;max-width:calc(100vw - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.tt-modal{width:90vw;height:90vh;max-width:90vw;max-height:90vh}
+.tt-modal[open]{display:flex;flex-direction:column}
+.tt-modal>header{position:static;padding:10px 16px;background:var(--panel);flex-wrap:wrap;row-gap:8px}
+.tt-modal>header .bulk{flex-basis:100%;margin:0}
+.bulk[hidden]{display:none}
+.dz-mob{display:none}
+#mBulk:not(.open){display:none}
+.bulk-tg.on{border-color:var(--acc);color:var(--acc2)}
+.tt-modal h3{margin:0;font-size:15px}
+.mdev{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;color:var(--mut)}
+.mdev select{width:auto;padding:5px 8px;font-size:13px}
+.tt-modal .body{padding:12px 16px;overflow:auto;flex:1;display:flex;flex-direction:column;min-height:0}
+.tt-modal .body>*{flex:none}
+.tt-modal .body>.drop:not(.small){flex:1;min-height:240px}
+.tt-modal>footer{display:flex;gap:8px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.tt-modal>footer .msg{flex:1;margin:0}
+.tt-modal>footer [data-close]{margin-left:auto}
+.x{background:none;border:0;font-size:20px;line-height:1;padding:4px 8px;color:var(--mut)}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:26px 12px;text-align:center;color:var(--mut);cursor:pointer;transition:.15s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:15px}
+.drop svg{width:56px;height:56px;opacity:.7}
+.drop small{font-size:12px}
+.drop:hover,.drop.over{border-color:var(--acc);color:var(--acc2);background:#1d1a12}
+.drop b{color:var(--txt)}
+.drop.small{padding:10px;flex-direction:row;font-size:14px}
+.drop.small svg{width:20px;height:20px}
+.drop.small small{display:none}
+.bulk{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:10px 0;display:grid;gap:6px}
+.bulk .r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bulk .r>span{font-size:12px;color:var(--mut);min-width:104px}
+.bulk input,.bulk select{width:auto;padding:5px 8px;font-size:13px}
+.bulk button{padding:5px 10px}
+.bulk .grow{flex:1 1 180px}
+.ed td{vertical-align:top}
+.ed td{padding:6px 8px}
+.ed input,.ed select,.ed textarea{padding:5px 8px;font-size:13px;border-radius:6px}
+.ed .thumb{width:60px;height:106px}
+.ed td.v{width:72px}
+.ed{table-layout:fixed}
+.ed textarea{height:106px;min-width:0;width:100%;line-height:1.45;resize:none}
+.ed .sch>*{width:100%}
+.ed .sch>*+*{margin-top:6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;padding:5px 6px;font-size:12px;background:var(--panel2);color:var(--mut)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--chip);color:var(--acc2)}
+.ed .ht{min-width:130px}
+.ed input.past{border-color:var(--err)}
+.ed .up{height:3px;background:var(--line);border-radius:9px;margin-top:6px;overflow:hidden}
+.ed .up i{display:block;height:100%;width:0;background:var(--acc)}
+.gear{display:inline-flex;align-items:center;justify-content:center;padding:7px;line-height:0}
+.gear svg{width:17px;height:17px}
+.tt-modal>header .gear{background:none;border-color:transparent;color:var(--mut)}
+.tt-modal>header .gear:hover{color:var(--acc2)}
+.tt-set{width:min(480px,100vw - 32px)}
+.tt-set[open]{display:flex;flex-direction:column}
+.tt-set>header{position:static;padding:12px 16px;background:var(--panel)}
+.tt-set h3{margin:0;font-size:15px}
+.tt-set .body{padding:14px 16px}
+.tt-set label{margin:10px 0 4px}
+.tt-set .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tt-set .r{display:flex;gap:6px}
+.tt-set .r input{width:72px}
+.tt-set .chk{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--txt);font-size:13px;cursor:pointer}
+.tt-set .chk input{width:16px;height:16px;accent-color:var(--acc)}
+.tt-set>footer{display:flex;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.tt-set>footer .msg{flex:1;margin:0}
+
+
+.pv{width:min(420px,100vw - 32px)}
+.pv video{display:block;width:100%;max-height:80dvh;background:#000}
+
+@media (max-width:760px){
+  /* header: 2 hàng — [logo · tab · máy · ⚙] / [tìm · lọc ngày]; nút Thêm thành nút nổi */
+  body.view-tt>header{flex-wrap:wrap;gap:8px;padding:8px 12px}
+  body.view-tt>header .brand{display:none}
+  .nav button{padding:5px 10px}
+  body.view-tt .tt-bar{display:contents}
+  body.view-tt .tt-bar .sp,body.view-tt #ttStatus{display:none}
+  #ttDev{order:2;margin-left:auto;font-size:12px;padding:6px 9px}
+  .tt-bar .gear{order:3}
+  #ttQ{order:10;flex:1 1 55%;max-width:none}
+  #ttRange{order:11;flex:0 1 40%}
+  #ttFrom,#ttTo{order:12;flex:1 1 40%}
+  #ttReset{order:13}
+  #ttSelEdit,#ttSelDel{order:14;flex:1 1 40%}
+  .tt-bar input,.tt-bar select{font-size:16px;padding:7px 10px}
+  #ttAdd{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:20;border-radius:999px;
+    padding:14px 20px;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+  #viewTt{padding:10px 10px 90px}
+  #viewTt>.card{background:none;border:0;padding:0}
+  .tt-stats{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -10px 10px;padding:0 10px}
+  .tt-stats::-webkit-scrollbar{display:none}
+  .tt-stats .chip{flex:none}
+
+  /* danh sách video: thẻ gọn */
+  .tt-wrap{border:0;overflow:visible}
+  .tt-table thead{display:none}
+  .tt-table,.tt-table tbody{display:block}
+  .tt-table tr{display:grid;grid-template-columns:22px 52px minmax(0,1fr);column-gap:10px;row-gap:3px;position:relative;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+  .tt-table tbody tr:hover{background:var(--panel)}
+  .tt-table tr.sel{background:#221d12}
+  .tt-table td{display:block;padding:0;border:0;grid-column:3;min-width:0}
+  .tt-table td.c{grid-column:1;grid-row:1/span 4}
+  .tt-table td.v{grid-column:2;grid-row:1/span 6;width:auto}
+  .thumb{width:52px;height:92px}
+  #ttRows td.num{display:none}
+  #ttRows .when{font-size:12px;color:var(--mut)}
+  #ttRows .when small{display:inline;margin-left:4px}
+  #ttRows .cap{max-width:none}
+  .err-t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:none;cursor:pointer}
+  .err-t.full{display:block}
+  .tt-table .act{text-align:left;margin-top:4px}
+  .tt-table .act button{margin:0 6px 0 0;padding:6px 11px}
+
+  /* modal: toàn màn hình, thanh hàng loạt gập lại */
+  .tt-modal{width:100vw;height:100dvh;max-width:100vw;max-height:100dvh;border:0;border-radius:0;margin:0}
+  .tt-modal>header{padding:10px 12px;gap:6px}
+  .tt-modal h3{font-size:14px;white-space:nowrap}
+  .mdev .ico{display:none}
+  .mdev select{max-width:108px;font-size:13px;padding:5px 6px}
+  .bulk-tg{padding:5px 8px;font-size:12px}
+  .tt-modal>header .gear,.tt-modal>header .x{padding:5px}
+  .bulk .r{gap:6px}
+  .bulk .r>span{min-width:100%}
+  .bulk input,.bulk select{flex:1 1 40%;font-size:16px}
+  .bulk .grow,#bStart{flex:1 1 100%}
+  .bulk button{flex:1 1 40%;padding:8px}
+  .tt-modal .body{padding:10px 12px}
+  .drop .dz-desk{display:none}.drop .dz-mob{display:inline}
+  .drop:not(.small){min-height:200px}
+  .ed tr{grid-template-columns:22px 52px minmax(0,1fr);padding:10px 36px 10px 10px}
+  .ed td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--mut);margin:2px 0 3px}
+  .ed td+td[data-l]{margin-top:4px}
+  .ed .thumb{width:52px;height:92px}
+  .ed td.v{width:auto}
+  .ed td.sch{width:auto}
+  .ed textarea{height:72px;min-width:0;width:100%;font-size:16px}
+  .ed textarea.ht{height:46px}
+  .ed input{font-size:16px}
+  .ed td.rm{position:absolute;top:6px;right:4px}
+  .tt-modal>footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .tt-modal>footer #mSave{flex:1}
+  .tt-modal>footer .msg:empty{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎙 <b class="brand">Review <span>Voice</span></b></h1>
+  <nav class="nav" id="nav"><button data-view="voice" class="on">Giọng đọc</button><button data-view="tt">TikTok</button></nav>
+  <span id="status" class="loading">đang nạp model…</span>
+  <div class="tt-bar" id="ttBar">
+    <input id="ttQ" type="search" placeholder="Tìm caption, hashtag…">
+    <select id="ttStatus"><option value="">Mọi trạng thái</option></select>
+    <select id="ttRange">
+      <option value="">Mọi ngày đăng</option><option value="today">Hôm nay</option><option value="tomorrow">Ngày mai</option>
+      <option value="week">7 ngày tới</option><option value="past">Đã qua</option><option value="custom">Khoảng ngày…</option></select>
+    <input id="ttFrom" type="date" hidden title="Từ ngày"><input id="ttTo" type="date" hidden title="Đến ngày">
+    <button id="ttReset" class="sm" hidden>Bỏ lọc</button>
+    <span class="sp"></span>
+    <button class="dev" id="ttDev" title="Xem / xoá video đã chép vào điện thoại"></button>
+    <button id="ttSelEdit" hidden>✎ Sửa đã chọn</button>
+    <button id="ttSelDel" hidden>🗑 Xoá đã chọn</button>
+    <button class="gear" data-set title="Cài đặt mặc định (caption, hashtag, quyền, lịch)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="primary" id="ttAdd">＋ Thêm video</button>
+  </div>
+    <span class="sp"></span>
+    <select id="projects" class="adv-only" style="width:auto"><option value="">— mở dự án cũ —</option></select>
+</header>
+
+<main>
+  <section class="card">
+    <div class="tabs adv-only">
+      <button id="tabScript" class="on">Kịch bản</button>
+      <button id="tabLex">Phát âm</button>
+    </div>
+
+    <div id="paneScript">
+      <div class="lbl">
+        <label for="script">Kịch bản</label>
+        <div class="icons">
+          <button class="icon" id="btnPaste" title="Dán từ clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>Dán</button>
+          <button class="icon" id="btnClear" title="Xoá hết kịch bản"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Xoá</button>
+        </div>
+      </div>
+      <textarea id="script" spellcheck="false" placeholder="Dán kịch bản vào đây…&#10;&#10;[excited] Mấy vợ ơi! …"></textarea>
+      <div class="chips adv-only" id="tagChips"></div>
+      <div class="row adv-only">
+        <div><label>Giọng</label><select id="voice"></select></div>
+        <div><label>Tên dự án</label><input id="name" value="test"></div>
+        <div><label>Tốc độ <span id="spv">1.00</span></label><input id="speed" type="range" min="0.8" max="1.25" step="0.05" value="1"></div>
+        <div><label>Chất lượng</label><select id="takes" title="Mỗi câu sinh N bản, máy chọn bản đọc đúng + giống Adam + nhấn nhá nhất">
+          <option value="1">Nhanh (1 bản)</option><option value="3" selected>Chuẩn (3 bản)</option><option value="5">Kỹ (5 bản)</option></select></div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="btnRender">▶ Render</button>
+      </div>
+      <div class="prog" id="prog"><i></i></div>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div id="paneLex" style="display:none">
+      <label>Thay chữ trước khi đọc (viết tắt, tiếng Anh, lỗi gõ). Phụ đề vẫn giữ chữ gốc.</label>
+      <textarea id="lex" spellcheck="false"></textarea>
+      <div class="actions" style="margin-top:10px">
+        <button class="primary" id="btnLex">Lưu</button>
+        <span class="msg" id="lexMsg"></span>
+      </div>
+      <p class="hint">Sửa xong → render lại hoặc bấm “Đọc lại” ở câu có từ đó.</p>
+    </div>
+  </section>
+
+  <section class="card none" id="result">
+    <h2>Kết quả</h2>
+    <div class="empty" id="empty">Chưa có bài nào.</div>
+    <div id="res" style="display:none">
+      <div class="full"><audio id="fullAudio" controls></audio></div>
+      <div class="meta adv-only" id="meta"></div>
+      <div class="dl" id="dl"></div>
+      <div class="lines adv-only" id="lines"></div>
+    </div>
+  </section>
+</main>
+
+<section id="viewTt">
+  <div class="card">
+    <div class="tt-stats" id="ttStats"></div>
+    <div class="tt-wrap">
+      <table class="tt-table">
+        <thead><tr><th class="c"><input type="checkbox" id="ttAll"></th><th>Video</th><th>Tên</th><th>Dung lượng</th><th>Giờ đăng</th><th>Trạng thái</th><th class="act">Thao tác</th></tr></thead>
+        <tbody id="ttRows"></tbody>
+      </table>
+      <div class="tt-empty" id="ttEmpty" hidden></div>
+    </div>
+  </div>
+</section>
+
+<dialog class="tt-modal" id="ttModal">
+  <header><h3 id="mTitle">Thêm video</h3>
+    <label class="mdev" title="Điện thoại dùng để đăng các video này"><span class="ico">📱</span> <select id="mDev"></select></label>
+    <span class="sp"></span><button class="sm bulk-tg" id="mBulkTg" hidden>Hàng loạt ▾</button><button class="gear" data-set title="Cài đặt mặc định"></button><button class="x" data-close>×</button>
+    <div class="bulk" id="mBulk" hidden>
+      <div class="r"><span>Áp dụng cho <b id="mSelN">tất cả</b></span>
+        <input class="grow" id="bCap" placeholder="Caption (để trống = giữ nguyên)">
+        <input class="grow" id="bTags" placeholder="#hashtag …">
+        <input id="bMen" placeholder="@nhắc đến" style="width:150px">
+        <button class="sm" id="bApply">Áp dụng</button></div>
+      <div class="r"><span>Tự xếp giờ đăng</span>
+        <input type="datetime-local" id="bStart"> <span style="min-width:0">mỗi</span>
+        <input type="number" id="bEvery" min="1" value="5" style="width:70px">
+        <select id="bUnit"><option value="60">giờ</option><option value="1">phút</option><option value="1440">ngày</option></select>
+        <button class="sm" id="bSched" title="Chuyển sang Hẹn giờ, lần lượt từ giờ bắt đầu">Xếp lịch</button>
+        <button class="sm" id="bNow" title="Đăng ngay khi lưu, lần lượt từng video">⚡ Đăng ngay</button></div>
+    </div>
+  </header>
+  <div class="body">
+    <div class="drop" id="mDrop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+      <div class="dz-desk"><b>Kéo thả video vào đây</b> hoặc bấm để chọn file</div><b class="dz-mob">Chạm để chọn video</b>
+      <small>Chọn được nhiều file cùng lúc · .mp4 .mov .webm</small>
+    </div>
+    <input type="file" id="mFile" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm" multiple hidden>
+    <div id="mEditor" hidden>
+      <div class="tt-wrap">
+        <table class="tt-table ed">
+          <colgroup><col style="width:40px"><col style="width:80px"><col><col style="width:25%"><col style="width:210px"><col style="width:44px"></colgroup>
+          <thead><tr><th class="c"><input type="checkbox" id="mAll"></th><th>Video</th><th>Caption</th><th>Hashtag</th><th>Lịch đăng · Nhắc đến</th><th></th></tr></thead>
+          <tbody id="mRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <footer><div class="msg" id="mMsg"></div><button data-close>Huỷ</button><button class="primary" id="mSave" disabled>Lưu</button></footer>
+</dialog>
+
+<dialog class="tt-set" id="ttSet">
+  <header><h3>⚙ Cài đặt mặc định</h3><span class="sp"></span><button class="x" data-sclose>×</button></header>
+  <div class="body">
+    <p class="hint" style="margin:0 0 12px">Tự điền cho mọi video mới thêm vào.</p>
+    <label>Caption mặc định</label>
+    <textarea id="sCap" rows="2" maxlength="2200" placeholder="VD: Trùi uii, mê em này quá đi 🫶🏻💯"></textarea>
+    <label>Hashtag mặc định</label>
+    <input id="sTags" placeholder="#xuhuong">
+    <div class="two">
+      <div><label>Quyền riêng tư</label><select id="sPriv"></select></div>
+      <div><label>Xếp lịch cách nhau</label>
+        <div class="r"><input id="sEvery" type="number" min="1" max="999"><select id="sUnit"><option value="1">phút</option><option value="60">giờ</option><option value="1440">ngày</option></select></div></div>
+    </div>
+    <label class="chk" id="sApplyWrap"><input type="checkbox" id="sApply" checked> Áp dụng luôn cho các video đang thêm</label>
+  </div>
+  <footer><div class="msg" id="sMsg"></div><button data-sclose>Huỷ</button><button class="primary" id="sSave">Lưu</button></footer>
+</dialog>
+
+<dialog class="tt-set" id="ttPhone">
+  <header><h3>📱 Video đã chép vào điện thoại</h3><span class="sp"></span><button class="x" data-pclose>×</button></header>
+  <div class="body" id="pBody"></div>
+  <footer><div class="msg" id="pMsg"></div><button data-pclose>Đóng</button></footer>
+</dialog>
+
+<dialog class="pv" id="ttPreview"><video id="pvVideo" controls playsinline></video></dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = async (url, opt = {}) => {
+  const r = await fetch(url, {headers: {"Content-Type": "application/json"}, ...opt});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+};
+const store = {
+  get: k => { try { return localStorage.getItem("rv." + k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem("rv." + k, v); } catch {} },
+};
+let META = null, PROJECT = null, busy = false;
+
+const DEFAULT_SCRIPT = `[excited] Mấy vợ ơi! Lại là một siêu phẩm khiến chiến thần Võ Hà Linh cũng phải khen nức nở đây nè!
+[playful] Tui tò mò quá nên phải múc liền em Sữa rửa mặt và Mặt nạ 2 trong 1 Nước Cám Gạo FULLY này về trải nghiệm nè!
+[confident] Điểm tiện lợi nhất là xài được 2 cách luôn!`;
+
+// ─── meta ──────────────────────────────────────────────
+async function loadMeta() {
+  META = await api("/api/meta");
+  $("#status").className = META.ready ? "ready" : "loading";
+  $("#status").textContent = META.ready ? "sẵn sàng" : "đang nạp model…";
+  const cur = $("#voice").value || store.get("voice") || META.voices[0];
+  $("#voice").innerHTML =
+    (META.voices.length ? `<optgroup label="Giọng đã clone">${META.voices.map(v => `<option>${v}</option>`).join("")}</optgroup>` : "") +
+    (META.presets.length ? `<optgroup label="Giọng có sẵn VieNeu">${META.presets.map(v => `<option>${v}</option>`).join("")}</optgroup>` : "");
+  if (cur) $("#voice").value = cur;
+  $("#tagChips").innerHTML =
+    META.tags.map(t => `<button class="chip tag-${t}" data-tag="${t}">[${t}]</button>`).join("") +
+    META.native_tags.map(t => `<button class="chip native" data-tag="${t}" title="Âm thanh thật do model tạo">[${t}]</button>`).join("");
+  const pcur = $("#projects").value;
+  $("#projects").innerHTML = `<option value="">— mở dự án cũ —</option>` +
+    META.projects.map(p => `<option>${p}</option>`).join("");
+  $("#projects").value = pcur;
+  if (!META.ready) setTimeout(loadMeta, 2000);
+}
+
+$("#tagChips").onclick = e => {
+  const t = e.target.dataset.tag; if (!t) return;
+  const ta = $("#script"), s = ta.selectionStart;
+  const ins = `[${t}] `;
+  ta.setRangeText(ins, s, ta.selectionEnd, "end"); ta.focus(); saveDraft();
+};
+
+// ─── jobs ──────────────────────────────────────────────
+async function waitJob(id, onTick) {
+  for (;;) {
+    const j = await api(`/api/job/${id}`);
+    onTick && onTick(j);
+    if (j.state === "done") return j;
+    if (j.state === "error") throw new Error(j.error);
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+function setBusy(b, text = "") {
+  busy = b;
+  $("#btnRender").disabled = b;
+  document.querySelectorAll(".ln button").forEach(x => x.disabled = b);
+  $("#prog").style.display = b ? "block" : "none";
+  msg(text);
+}
+function msg(t, err = false) { $("#msg").textContent = t; $("#msg").className = "msg" + (err ? " err" : ""); }
+function prog(done, total) { $("#prog i").style.width = total ? (100 * done / total) + "%" : "8%"; }
+
+// ─── render ────────────────────────────────────────────
+async function render() {
+  if (busy) return;
+  const script = $("#script").value.trim();
+  if (!script) return msg("Kịch bản trống.", true);
+  const adv = document.body.classList.contains("adv");
+  const d = new Date(), p2 = n => String(n).padStart(2, "0");
+  const name = (adv && $("#name").value.trim()) ||
+    `bai_${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}_${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}_${Math.random().toString(36).slice(2, 5)}`;
+  setBusy(true, "Đang xếp hàng…"); prog(0, 0);
+  const t0 = Date.now();
+  try {
+    const {job} = await api("/api/render", {method: "POST", body: JSON.stringify({
+      script, name, voice: $("#voice").value, speed: +$("#speed").value, takes: +$("#takes").value})});
+    await waitJob(job, j => { prog(j.done, j.total); if (j.state === "running") msg(`Đang đọc câu ${Math.min(j.done + 1, j.total)}/${j.total}…`); });
+    setBusy(false, `Xong trong ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+    setTimeout(() => $("#result").scrollIntoView({behavior: "smooth", block: "start"}), 150);
+    await openProject(name.replace(/[^\p{L}\p{N}_-]+/gu, "_").replace(/^_+|_+$/g, ""));
+    loadMeta();
+  } catch (e) { setBusy(false); msg("Lỗi: " + e.message, true); }
+}
+$("#btnRender").onclick = render;
+$("#script").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); render(); } });
+
+// ─── project view ──────────────────────────────────────
+const fmt = s => { s = +s; return `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, "0")}`; };
+async function openProject(name) {
+  PROJECT = await api(`/api/project/${encodeURIComponent(name)}`);
+  const P = PROJECT, v = P.mtime;
+  $("#empty").style.display = "none"; $("#res").style.display = "block"; $("#result").classList.remove("none");
+  history.replaceState(null, "", "#p=" + encodeURIComponent(P.name));
+  $("#fullAudio").src = `/files/${P.name}/full.wav?v=${v}`;
+  $("#meta").textContent = `${P.name} · giọng ${P.voice} · ${P.lines.length} câu · ${fmt(P.duration)} · tốc độ ${P.speed}`;
+  const f = x => `/files/${P.name}/${x}?v=${v}`;
+  $("#dl").innerHTML = `
+    <a href="/api/project/${P.name}/zip"><button class="primary big">⬇ Tải về cho CapCut</button></a>
+    <a class="adv-only" href="${f("full.wav")}" download><button class="sm">full.wav</button></a>
+    <a class="adv-only" href="${f("full.mp3")}" download><button class="sm">full.mp3</button></a>
+    <a class="adv-only" href="${f("full.srt")}" download><button class="sm">full.srt</button></a>`;
+  const tagOpts = ["neutral", ...META.tags];
+  $("#lines").innerHTML = P.lines.map((ln, i) => `
+    <div class="ln" data-i="${i + 1}">
+      <div class="no">${String(i + 1).padStart(2, "0")}</div>
+      <div>
+        <div class="top">
+          <select class="tag tag-${ln.tag}">${tagOpts.map(t => `<option ${t === ln.tag ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <audio controls preload="none" src="${f(`lines/${String(i + 1).padStart(2, "0")}.wav`)}"></audio>
+          <button class="sm redo" title="Đọc lại với seed mới (giữ nguyên chữ)">↻ Đọc lại</button>
+          <span class="t">${fmt(ln.start)}–${fmt(ln.end)}</span>
+        </div>
+        <div class="sub" contenteditable="plaintext-only" spellcheck="false" title="Phụ đề — sửa rồi bấm ra ngoài để lưu">${esc(ln.text)}</div>
+        <details><summary>Cách đọc (chữ đưa vào TTS)</summary>
+          <textarea class="tts" spellcheck="false">${esc(ln.tts)}</textarea>
+          <div class="actions" style="margin-top:6px"><button class="sm apply">Đọc lại theo chữ này</button></div>
+        </details>
+      </div>
+    </div>`).join("");
+  if (busy) document.querySelectorAll(".ln button").forEach(x => x.disabled = true);
+  $("#name").value = P.name;
+  if (P.script_text && !$("#script").value.trim()) $("#script").value = P.script_text;
+}
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c])); }
+
+async function lineOp(el, body, label) {
+  if (busy) return;
+  const n = +el.dataset.i;
+  el.classList.add("busy"); setBusy(true, `${label} câu ${n}…`); prog(0, 0);
+  try {
+    const {job} = await api(`/api/project/${PROJECT.name}/line/${n}`, {method: "POST", body: JSON.stringify(body)});
+    await waitJob(job);
+    setBusy(false, `Đã cập nhật câu ${n} + ghép lại bản full`);
+    await openProject(PROJECT.name);
+    if (body.resynth !== false) {
+      const a = document.querySelector(`.ln[data-i="${n}"] audio`); a && a.play();
+    }
+  } catch (e) { el.classList.remove("busy"); setBusy(false); msg("Lỗi: " + e.message, true); }
+}
+$("#lines").addEventListener("click", e => {
+  const el = e.target.closest(".ln"); if (!el) return;
+  if (e.target.classList.contains("redo")) lineOp(el, {tag: el.querySelector(".tag").value}, "Đọc lại");
+  if (e.target.classList.contains("apply")) lineOp(el, {tag: el.querySelector(".tag").value, tts: el.querySelector(".tts").value}, "Đọc lại");
+});
+$("#lines").addEventListener("change", e => {
+  if (!e.target.classList.contains("tag")) return;
+  const el = e.target.closest(".ln");
+  lineOp(el, {tag: e.target.value}, `Đổi sang [${e.target.value}] —`);
+});
+$("#lines").addEventListener("focusout", e => {
+  if (!e.target.classList.contains("sub")) return;
+  const el = e.target.closest(".ln"), n = +el.dataset.i, txt = e.target.textContent.trim();
+  if (txt && txt !== PROJECT.lines[n - 1].text) lineOp(el, {resynth: false, subtitle: txt}, "Lưu phụ đề");
+});
+$("#lines").addEventListener("play", e => {
+  document.querySelectorAll("audio").forEach(a => a !== e.target && a.pause());
+  document.querySelectorAll(".ln").forEach(x => x.classList.toggle("playing", x.contains(e.target)));
+}, true);
+
+$("#projects").onchange = async e => {
+  if (!e.target.value) return;
+  $("#script").value = "";
+  await openProject(e.target.value);
+};
+
+// ─── lexicon tab ───────────────────────────────────────
+function tab(which) {
+  $("#tabScript").classList.toggle("on", which === "s"); $("#tabLex").classList.toggle("on", which === "l");
+  $("#paneScript").style.display = which === "s" ? "" : "none"; $("#paneLex").style.display = which === "l" ? "" : "none";
+}
+$("#tabScript").onclick = () => tab("s");
+$("#tabLex").onclick = async () => { tab("l"); $("#lex").value = (await api("/api/lexicon")).text; };
+$("#btnLex").onclick = async () => {
+  try {
+    const r = await api("/api/lexicon", {method: "PUT", body: JSON.stringify({text: $("#lex").value})});
+    $("#lexMsg").textContent = `Đã lưu ${r.count} mục`; $("#lexMsg").className = "msg";
+  } catch (e) { $("#lexMsg").textContent = e.message; $("#lexMsg").className = "msg err"; }
+};
+
+// ─── dán / xoá ─────────────────────────────────────────
+$("#btnPaste").onclick = async () => {
+  const ta = $("#script");
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error("no-api");
+    const t = await navigator.clipboard.readText();
+    if (!t.trim()) return msg("Clipboard đang trống.", true);
+    ta.value = t.trim(); saveDraft(); msg(`Đã dán ${t.trim().split(/\n/).length} dòng.`);
+  } catch {
+    // mạng LAN (http) không cho đọc clipboard → dọn ô + focus để nhấn giữ → Dán
+    ta.value = ""; saveDraft(); ta.focus();
+    msg("Nhấn giữ vào ô kịch bản → chọn Dán.");
+  }
+};
+let lastCleared = "";
+$("#btnClear").onclick = () => {
+  const ta = $("#script");
+  if (!ta.value) {
+    if (lastCleared) { ta.value = lastCleared; lastCleared = ""; saveDraft(); msg("Đã khôi phục."); }
+    return;
+  }
+  lastCleared = ta.value; ta.value = ""; saveDraft(); ta.focus();
+  msg("Đã xoá — bấm Xoá lần nữa để khôi phục.");
+};
+
+// ─── misc ──────────────────────────────────────────────
+function saveDraft() { store.set("script", $("#script").value); }
+$("#script").addEventListener("input", saveDraft);
+$("#voice").onchange = () => store.set("voice", $("#voice").value);
+$("#speed").oninput = () => $("#spv").textContent = (+$("#speed").value).toFixed(2);
+$("#script").value = store.get("script") || DEFAULT_SCRIPT;
+
+// ─── tiktok ────────────────────────────────────────────
+const TT_ST = {draft: "Nháp", scheduled: "Đã lên lịch", posting: "Đang đăng", posted: "Đã đăng", failed: "Lỗi"};
+const TT_PRIV = {public: "Công khai", friends: "Bạn bè", private: "Chỉ mình tôi"};
+let TT = [], ttSig = "", ttTimer = null, M = {rows: []};
+const ttSel = new Set();
+const p2 = n => String(n).padStart(2, "0");
+const localISO = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+const dayISO = off => { const d = new Date(); d.setDate(d.getDate() + off); return localISO(d).slice(0, 10); };
+const fmtSize = b => !b ? "0 KB" : b >= 1e9 ? (b / 1e9).toFixed(2) + " GB" : b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1e3)) + " KB";
+const fmtWhen = s => `${s.slice(11, 16)} · ${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}`;
+const ttLocked = it => it.status === "posting" || it.status === "posted";
+const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+
+$("#ttStatus").innerHTML += Object.entries(TT_ST).map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
+
+function setView(v) {
+  document.body.classList.toggle("view-tt", v === "tt");
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  store.set("view", v);
+  clearInterval(ttTimer);
+  if (v === "tt") { ttLoadSet(); ttLoad(); ttTimer = setInterval(() => ttLoad().catch(() => {}), 15000); }
+}
+$("#nav").onclick = e => { const v = e.target.dataset.view; if (v) setView(v); };
+
+let DEVS = [], ttFast = null, SET = {caption: "", hashtags: "#xuhuong", privacy: "public", every: 5, unit: 60};
+
+// ─── tiktok: video đã chép vào điện thoại ─────────────
+async function pLoad() {
+  let r;
+  try { r = await api("/api/tiktok/phone-files"); }
+  catch (e) { $("#pBody").textContent = "Lỗi: " + e.message; return; }
+  if (!r.devices.length) { $("#pBody").textContent = "Chưa cắm điện thoại nào."; return; }
+  $("#pBody").innerHTML = r.devices.map(d => `
+    <div class="pdev">
+      <div class="phead"><b>${esc(d.model)}</b><span>${d.files.length} video · ${fmtSize(d.total)}</span><span class="sp"></span>
+        <button class="del" data-clear="${esc(d.serial)}" ${d.files.length ? "" : "disabled"}>🗑 Xoá hết</button></div>
+      ${d.files.slice(0, 8).map(f => `<div class="pf"><span>${esc(f.name)}</span><span>${fmtSize(f.size)}</span><span>${fmtWhen(localISO(new Date(f.mtime * 1000)))}</span></div>`).join("")}
+      ${d.files.length > 8 ? `<div class="pf"><span>… và ${d.files.length - 8} video nữa</span></div>` : ""}
+    </div>`).join("") +
+    `<p class="hint">Thư mục ${esc(r.dir)} trên máy. Video đăng xong vẫn nằm đây (TikTok còn đọc khi tải lên nền); lần đăng sau tự dọn file cũ hơn 2 ngày.</p>`;
+}
+$("#ttDev").onclick = () => { $("#pMsg").textContent = ""; $("#pBody").textContent = "Đang đọc điện thoại…"; $("#ttPhone").showModal(); pLoad(); };
+$("#ttPhone").addEventListener("click", async e => {
+  if (e.target.closest("[data-pclose]")) return $("#ttPhone").close();
+  const b = e.target.closest("[data-clear]"); if (!b) return;
+  if (!confirm("Xoá hết video công cụ đã chép vào máy này? (không ảnh hưởng bài đã đăng trên TikTok)")) return;
+  b.disabled = true;
+  try {
+    const r = await api("/api/tiktok/phone-files/clear", {method: "POST", body: JSON.stringify({serial: b.dataset.clear})});
+    $("#pMsg").textContent = `Đã xoá ${r.deleted} video.`; $("#pMsg").className = "msg";
+  } catch (err) { $("#pMsg").textContent = err.message; $("#pMsg").className = "msg err"; }
+  pLoad();
+});
+
+// ─── tiktok: cài đặt mặc định ─────────────────────────
+$("#sPriv").innerHTML = Object.entries(TT_PRIV).map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
+document.querySelectorAll(".gear[data-set]").forEach(b => { if (!b.innerHTML.trim()) b.innerHTML = $(".gear[data-set]").innerHTML; });
+async function ttLoadSet() { SET = await api("/api/tiktok/settings").catch(() => SET); }
+function ttOpenSet() {
+  $("#sCap").value = SET.caption; $("#sTags").value = SET.hashtags; $("#sPriv").value = SET.privacy;
+  $("#sEvery").value = SET.every; $("#sUnit").value = SET.unit;
+  $("#sApplyWrap").hidden = !($("#ttModal").open && M.mode === "add" && M.rows.length);
+  $("#sMsg").textContent = "";
+  $("#ttSet").showModal();
+}
+document.addEventListener("click", e => { if (e.target.closest(".gear[data-set]")) ttOpenSet(); });
+$("#ttSet").addEventListener("click", e => { if (e.target.closest("[data-sclose]")) $("#ttSet").close(); });
+$("#sSave").onclick = async () => {
+  try {
+    SET = await api("/api/tiktok/settings", {method: "PUT", body: JSON.stringify({
+      caption: $("#sCap").value, hashtags: $("#sTags").value, privacy: $("#sPriv").value,
+      every: +$("#sEvery").value || 1, unit: +$("#sUnit").value})});
+  } catch (e) { $("#sMsg").textContent = e.message; $("#sMsg").className = "msg err"; return; }
+  if ($("#ttModal").open) {
+    $("#bEvery").value = SET.every; $("#bUnit").value = SET.unit;
+    if (!$("#sApplyWrap").hidden && $("#sApply").checked) {
+      M.rows.forEach(r => { r.caption = SET.caption; r.hashtags = SET.hashtags; r.privacy = SET.privacy; });
+      mRender();
+    }
+    mMsg("Đã lưu cài đặt mặc định.");
+  }
+  $("#ttSet").close();
+};
+const devName = s => s ? (DEVS.find(d => d.serial === s)?.model || s) : (DEVS[0] ? `${DEVS[0].model} (mặc định)` : "máy đầu tiên");
+const KEEP = "__keep";
+// "" = máy đầu tiên đang cắm (thường chỉ có 1 máy → hiện luôn tên máy)
+function mDevFill(cur) {
+  const many = DEVS.length > 1;
+  const opts = [["", DEVS.length === 1 ? DEVS[0].model : many ? "Máy đầu tiên đang cắm" : "Chưa cắm điện thoại"],
+    ...(many ? DEVS.map(d => [d.serial, d.model]) : []),
+    ...(cur && cur !== KEEP && !(many && DEVS.some(d => d.serial === cur)) ? [[cur, DEVS.some(d => d.serial === cur) ? devName(cur) : cur + " (chưa cắm)"]] : []),
+    ...(M.mixedDev ? [[KEEP, "Giữ máy riêng từng video"]] : [])];
+  $("#mDev").innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}" ${v === (cur || "") ? "selected" : ""}>${esc(l)}</option>`).join("");
+}
+async function ttDevices() {
+  const r = await api("/api/tiktok/devices").catch(() => ({devices: []}));
+  const changed = JSON.stringify(r.devices) !== JSON.stringify(DEVS);
+  DEVS = r.devices;
+  $("#ttDev").className = "dev " + (DEVS.length ? "on" : "off");
+  $("#ttDev").textContent = DEVS.length ? DEVS.map(d => d.model).join(", ") : "Chưa cắm điện thoại";
+  if (changed && $("#ttModal").open) mDevFill($("#mDev").value);
+  if (changed && TT.length) ttRender();
+}
+async function ttLoad() {
+  ttDevices();
+  const r = await api("/api/tiktok/videos");
+  const sig = JSON.stringify(r.items);
+  if (r.items.some(x => x.status === "posting") && !ttFast) ttFast = setTimeout(() => { ttFast = null; ttLoad(); }, 2500);
+  if (sig === ttSig) return;                 // không đổi → khỏi vẽ lại (thumbnail khỏi nháy)
+  ttSig = sig; TT = r.items;
+  [...ttSel].forEach(id => TT.some(x => x.id === id) || ttSel.delete(id));
+  ttRender();
+}
+
+function ttFiltered() {
+  const q = $("#ttQ").value.trim().toLowerCase(), rg = $("#ttRange").value;
+  const [lo, hi] = {today: [dayISO(0), dayISO(0)], tomorrow: [dayISO(1), dayISO(1)], week: [dayISO(0), dayISO(6)],
+    custom: [$("#ttFrom").value, $("#ttTo").value || "~"]}[rg] || ["", "~"];
+  const now = localISO(new Date());
+  return TT.filter(it => {
+    if (q && ![it.title, it.caption, it.hashtags, it.filename].join(" ").toLowerCase().includes(q)) return false;
+    if (!rg) return true;
+    const d = it.schedule_at;
+    if (!d) return false;
+    if (rg === "past") return d < now;
+    return d.slice(0, 10) >= lo && d.slice(0, 10) <= hi;
+  });
+}
+
+function ttRow(it) {
+  const locked = ttLocked(it), on = ttSel.has(it.id);
+  const link = /^https?:\/\//.test(it.post_url || "") ? ` <a href="${esc(it.post_url)}" target="_blank" rel="noopener">xem ↗</a>` : "";
+  return `<tr data-id="${it.id}" class="${on ? "sel" : ""}">
+    <td class="c"><input type="checkbox" ${on ? "checked" : ""}></td>
+    <td class="v"><video class="thumb" src="/tiktok/files/${it.file}#t=0.5" preload="metadata" muted playsinline title="Xem video"></video></td>
+    <td><div class="ttl">${esc(it.title || it.filename)}</div><div class="cap">${esc(it.caption)} <i>${esc([it.mentions, it.hashtags].filter(Boolean).join(" "))}</i></div></td>
+    <td class="num" data-l="Dung lượng">${fmtSize(it.size)}</td>
+    <td class="when" data-l="Giờ đăng">${it.schedule_at ? fmtWhen(it.schedule_at) : "—"}<small>${TT_PRIV[it.privacy] || ""}${DEVS.length > 1 || (it.device && !DEVS.some(d => d.serial === it.device)) ? ` · 📱 ${esc(devName(it.device))}` : ""}</small></td>
+    <td><span class="badge st-${it.status}">${TT_ST[it.status]}</span>${link}
+      ${it.status === "posting" && it.step ? `<div class="step-t">${esc(it.step)}…</div>` : ""}
+      ${it.status === "posted" && it.note?.includes(" · ") ? `<div class="step-t">${esc(it.note.split(" · ").slice(1).join(" · "))}</div>` : ""}
+      ${it.error ? `<div class="err-t" title="${esc(it.error)}">${esc(it.error)}</div>` : ""}</td>
+    <td class="act">
+      ${locked ? "" : `<button data-a="now">${it.status === "failed" ? "↻ Thử lại" : "↑ Đăng ngay"}</button>`}
+      <button data-a="edit" ${locked ? "disabled" : ""}>✎ Sửa</button>
+      <button class="del" data-a="del" title="Xoá" ${it.status === "posting" ? "disabled" : ""}>🗑</button>
+    </td></tr>`;
+}
+
+function ttRender() {
+  const all = ttFiltered(), st = $("#ttStatus").value;
+  const rows = (st ? all.filter(x => x.status === st) : all).sort((a, b) =>
+    (a.status === "posted") - (b.status === "posted") ||
+    (a.status === "posted" ? cmp(b.schedule_at, a.schedule_at) : cmp(a.schedule_at || "", b.schedule_at || "")));
+  $("#ttStats").innerHTML = [["", "Tất cả", all.length], ...Object.entries(TT_ST).map(([k, l]) => [k, l, all.filter(x => x.status === k).length])]
+    .map(([k, l, n]) => `<button class="chip ${k === st ? "on" : ""}" data-st="${k}">${l}<b>${n}</b></button>`).join("");
+  $("#ttRows").innerHTML = rows.map(ttRow).join("");
+  $("#ttEmpty").hidden = rows.length > 0;
+  $("#ttEmpty").textContent = TT.length ? "Không có video nào khớp bộ lọc." : "Chưa có video nào — bấm “＋ Thêm video” hoặc kéo thả file vào đây.";
+  const n = rows.filter(x => ttSel.has(x.id)).length;
+  $("#ttAll").checked = n > 0 && n === rows.length;
+  $("#ttSelEdit").hidden = $("#ttSelDel").hidden = !ttSel.size;
+  $("#ttSelEdit").textContent = `✎ Sửa ${ttSel.size} đã chọn`;
+  $("#ttSelDel").textContent = `🗑 Xoá ${ttSel.size} đã chọn`;
+  $("#ttReset").hidden = !($("#ttQ").value || st || $("#ttRange").value);
+}
+
+$("#ttQ").oninput = ttRender;
+$("#ttStatus").onchange = ttRender;
+$("#ttRange").onchange = () => { $("#ttFrom").hidden = $("#ttTo").hidden = $("#ttRange").value !== "custom"; ttRender(); };
+$("#ttFrom").onchange = $("#ttTo").onchange = ttRender;
+$("#ttReset").onclick = () => { $("#ttQ").value = $("#ttStatus").value = $("#ttRange").value = ""; $("#ttRange").onchange(); };
+$("#ttStats").onclick = e => { const b = e.target.closest("[data-st]"); if (b) { $("#ttStatus").value = b.dataset.st; ttRender(); } };
+$("#ttAll").onchange = e => {
+  document.querySelectorAll("#ttRows tr").forEach(tr => e.target.checked ? ttSel.add(tr.dataset.id) : ttSel.delete(tr.dataset.id));
+  ttRender();
+};
+$("#ttRows").addEventListener("change", e => {
+  if (e.target.type !== "checkbox") return;
+  const id = e.target.closest("tr").dataset.id;
+  e.target.checked ? ttSel.add(id) : ttSel.delete(id);
+  ttRender();
+});
+$("#ttRows").addEventListener("click", e => {
+  const tr = e.target.closest("tr"); if (!tr) return;
+  const it = TT.find(x => x.id === tr.dataset.id);
+  if (e.target.classList.contains("thumb")) return ttPreview(`/tiktok/files/${it.file}`);
+  const a = e.target.closest("button")?.dataset.a;
+  if (a === "edit") ttOpen([it]);
+  if (a === "del") ttDelete([it.id]);
+  if (a === "now" && confirm(`Đăng “${it.title || it.filename}” ngay bây giờ?`))
+    ttPatch([{...it, schedule_at: localISO(new Date())}]);
+});
+$("#ttAdd").onclick = () => ttOpen(null);
+$("#ttSelEdit").onclick = () => {
+  const items = TT.filter(x => ttSel.has(x.id) && !ttLocked(x));
+  items.length ? ttOpen(items) : alert("Các video đã chọn đều đã đăng / đang đăng, không sửa được.");
+};
+$("#ttSelDel").onclick = () => ttDelete([...ttSel]);
+
+// mode "now" (đăng ngay) → giờ lúc bấm Lưu; server đăng lần lượt theo thứ tự danh sách
+const ttFields = r => ({title: r.title, caption: r.caption, hashtags: r.hashtags, mentions: r.mentions || "", privacy: r.privacy,
+  device: r.device || "", schedule_at: r.mode === "now" ? localISO(new Date()) : r.schedule_at || null});
+const stepMin = () => (+SET.every || 1) * (+SET.unit || 60);
+const staggered = i => localISO(new Date(Date.now() + i * stepMin() * 60000));
+async function ttPatch(items) {
+  try { await api("/api/tiktok/videos", {method: "PATCH", body: JSON.stringify({items: items.map(r => ({id: r.id, ...ttFields(r)}))})}); }
+  catch (e) { alert("Lỗi: " + e.message); }
+  ttLoad();
+}
+async function ttDelete(ids) {
+  if (!confirm(`Xoá ${ids.length} video? File video sẽ bị xoá khỏi máy.`)) return;
+  try { await api("/api/tiktok/delete", {method: "POST", body: JSON.stringify({ids})}); ids.forEach(id => ttSel.delete(id)); }
+  catch (e) { alert("Lỗi: " + e.message); }
+  ttLoad();
+}
+
+function ttPreview(src) {
+  $("#pvVideo").src = src; $("#ttPreview").showModal(); $("#pvVideo").play().catch(() => {});
+}
+$("#ttPreview").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$("#ttPreview").addEventListener("close", () => { const v = $("#pvVideo"); v.pause(); v.removeAttribute("src"); v.load(); });
+
+// ─── tiktok: modal thêm / sửa nhiều video ─────────────
+function ttOpen(items) {
+  M = {mode: items ? "edit" : "add", rows: [], busy: false, seq: 0};
+  $("#mBulk").classList.remove("open"); $("#mBulkTg").classList.remove("on"); $("#mBulkTg").textContent = "Hàng loạt ▾";
+  $("#mTitle").textContent = items ? `Sửa ${items.length} video` : "Thêm video";
+  $("#mDrop").hidden = !!items;
+  if (items) M.rows = items.map(it => ({k: ++M.seq, id: it.id, fileName: it.filename, url: `/tiktok/files/${it.file}`, size: it.size,
+    title: it.title, caption: it.caption, hashtags: it.hashtags, mentions: it.mentions || "", privacy: it.privacy, device: it.device || "",
+    mode: "later", schedule_at: it.schedule_at || "", sel: false}));
+  const devs = [...new Set(M.rows.map(r => r.device))];
+  M.mixedDev = devs.length > 1;
+  const cur = M.mixedDev ? KEEP : devs[0] || "";
+  mDevFill(cur);
+  ttDevices().then(() => mDevFill(cur));
+  $("#bStart").value = localISO(new Date());
+  $("#bCap").value = $("#bTags").value = $("#bMen").value = "";
+  $("#bEvery").value = SET.every; $("#bUnit").value = SET.unit;
+  mMsg(""); mRender();
+  $("#ttModal").showModal();
+}
+function mAddFiles(files) {
+  const all = [...files], ok = all.filter(f => /\.(mp4|mov|m4v|webm)$/i.test(f.name));
+  for (const f of ok) M.rows.push({k: ++M.seq, file: f, fileName: f.name, url: URL.createObjectURL(f), size: f.size,
+    title: f.name.replace(/\.[^.]+$/, ""), caption: SET.caption, hashtags: SET.hashtags, mentions: "", privacy: SET.privacy,
+    device: "", mode: "now", schedule_at: staggered(M.rows.length), sel: false});
+  mMsg(all.length > ok.length ? `Bỏ qua ${all.length - ok.length} file không phải video.` : "", all.length > ok.length);
+  mRender();
+}
+function mRender() {
+  const now = localISO(new Date());
+  $("#mEditor").hidden = $("#mBulk").hidden = $("#mBulkTg").hidden = !M.rows.length;
+  $("#mDrop").classList.toggle("small", M.rows.length > 0);
+  $("#mRows").innerHTML = M.rows.map(r => `
+    <tr data-k="${r.k}" class="${r.sel ? "sel" : ""}">
+      <td class="c"><input type="checkbox" data-f="sel" ${r.sel ? "checked" : ""}></td>
+      <td class="v"><video class="thumb" src="${r.url}#t=0.5" preload="metadata" muted playsinline></video>${r.file ? `<div class="up"><i style="width:${r.uploaded ? 100 : 0}%"></i></div>` : ""}</td>
+      <td data-l="Caption"><textarea data-f="caption" maxlength="2200" placeholder="Mô tả…">${esc(r.caption)}</textarea></td>
+      <td data-l="Hashtag"><textarea class="ht" data-f="hashtags" placeholder="#nhãn #loạisảnphẩm #nhãnsảnphẩm #màu #xuhuong">${esc(r.hashtags)}</textarea></td>
+      <td class="sch" data-l="Lịch đăng · Nhắc đến">
+        <div class="seg"><button data-mode="now" class="${r.mode === "now" ? "on" : ""}">⚡ Đăng ngay</button><button data-mode="later" class="${r.mode === "now" ? "" : "on"}">🕒 Hẹn giờ</button></div>
+        ${r.mode === "now" ? "" : `<input type="datetime-local" data-f="schedule_at" value="${r.schedule_at}" class="${r.schedule_at && r.schedule_at < now ? "past" : ""}" title="Trống = lưu nháp">`}
+        <input data-f="mentions" value="${esc(r.mentions)}" placeholder="@nhắc đến">
+      </td>
+      <td class="rm">${M.mode === "add" ? `<button class="x" data-a="rm" title="Bỏ file này">×</button>` : ""}</td>
+    </tr>`).join("");
+  mSync();
+}
+function mSync() {
+  const n = M.rows.filter(r => r.sel).length;
+  $("#mSelN").textContent = n ? `${n} dòng đã chọn` : `tất cả ${M.rows.length} dòng`;
+  $("#mAll").checked = n > 0 && n === M.rows.length;
+  $("#mSave").disabled = M.busy || !M.rows.length;
+  const nNow = M.rows.filter(r => r.mode === "now").length;
+  $("#mSave").textContent = (M.mode === "add" ? `Lưu ${M.rows.length} video` : "Lưu thay đổi") + (nNow ? ` · ⚡ ${nNow} đăng ngay` : "");
+}
+function mMsg(t, err = false) { $("#mMsg").textContent = t; $("#mMsg").className = "msg" + (err ? " err" : ""); }
+const mTargets = () => { const s = M.rows.filter(r => r.sel); return s.length ? s : M.rows; };
+
+$("#mRows").addEventListener("input", e => {
+  const f = e.target.dataset.f; if (!f) return;
+  const tr = e.target.closest("tr"), r = M.rows.find(x => x.k === +tr.dataset.k);
+  r[f] = f === "sel" ? e.target.checked : e.target.value;
+  if (f === "sel") tr.classList.toggle("sel", r.sel);
+  if (f === "schedule_at") e.target.classList.toggle("past", !!r.schedule_at && r.schedule_at < localISO(new Date()));
+  mSync();
+});
+$("#mRows").addEventListener("click", e => {
+  const tr = e.target.closest("tr"); if (!tr) return;
+  const r = M.rows.find(x => x.k === +tr.dataset.k);
+  if (e.target.classList.contains("thumb")) return ttPreview(r.url);
+  const md = e.target.closest("[data-mode]")?.dataset.mode;
+  if (md && md !== r.mode) {
+    r.mode = md;
+    if (md === "later" && !r.schedule_at) r.schedule_at = staggered(M.rows.indexOf(r));
+    return mRender();
+  }
+  if (e.target.dataset.a === "rm" && !M.busy) {
+    URL.revokeObjectURL(r.url); M.rows = M.rows.filter(x => x !== r); mRender();
+  }
+});
+$("#mBulkTg").onclick = () => {
+  const on = $("#mBulk").classList.toggle("open");
+  $("#mBulkTg").classList.toggle("on", on); $("#mBulkTg").textContent = on ? "Hàng loạt ▴" : "Hàng loạt ▾";
+};
+$("#ttRows").addEventListener("click", e => { const t = e.target.closest(".err-t"); if (t) t.classList.toggle("full"); });
+$("#mAll").onchange = e => { M.rows.forEach(r => r.sel = e.target.checked); mRender(); };
+$("#bApply").onclick = () => {
+  const cap = $("#bCap").value.trim(), tags = $("#bTags").value.trim(), men = $("#bMen").value.trim();
+  if (!cap && !tags && !men) return mMsg("Nhập caption / hashtag / nhắc đến để áp dụng.", true);
+  mTargets().forEach(r => { if (cap) r.caption = cap; if (tags) r.hashtags = tags; if (men) r.mentions = men; });
+  mMsg(""); mRender();
+};
+$("#bSched").onclick = () => {
+  const t0 = new Date($("#bStart").value), step = +$("#bEvery").value * +$("#bUnit").value;
+  if (isNaN(t0) || !(step > 0)) return mMsg("Chọn giờ bắt đầu và khoảng cách hợp lệ.", true);
+  mTargets().forEach((r, i) => { r.mode = "later"; r.schedule_at = localISO(new Date(t0.getTime() + i * step * 60000)); });
+  mMsg(""); mRender();
+};
+$("#bNow").onclick = () => { mTargets().forEach(r => r.mode = "now"); mRender(); };
+
+function ttUpload(r) {
+  return new Promise((ok, bad) => {
+    const x = new XMLHttpRequest(), bar = document.querySelector(`#mRows tr[data-k="${r.k}"] .up i`);
+    x.open("PUT", "/api/tiktok/upload?filename=" + encodeURIComponent(r.fileName));
+    x.upload.onprogress = e => { if (bar && e.lengthComputable) bar.style.width = (100 * e.loaded / e.total) + "%"; };
+    x.onload = () => {
+      let j = {}; try { j = JSON.parse(x.responseText); } catch {}
+      x.status < 300 ? ok(j) : bad(new Error(j.detail || x.statusText));
+    };
+    x.onerror = () => bad(new Error("mất kết nối tới server"));
+    x.send(r.file);
+  });
+}
+$("#mSave").onclick = async () => {
+  if (M.busy) return;
+  const past = M.rows.filter(r => r.mode !== "now" && r.schedule_at && r.schedule_at < localISO(new Date())).length;
+  if (past && !confirm(`${past} video có giờ đăng đã qua → sẽ đăng ngay sau khi lưu. Tiếp tục?`)) return;
+  const dev = $("#mDev").value;
+  if (dev !== KEEP) M.rows.forEach(r => r.device = dev);
+  M.busy = true; mSync();
+  try {
+    if (M.mode === "edit") {
+      await api("/api/tiktok/videos", {method: "PATCH", body: JSON.stringify({items: M.rows.map(r => ({id: r.id, ...ttFields(r)}))})});
+    } else {
+      const items = [];
+      for (const [i, r] of M.rows.entries()) {
+        mMsg(`Đang tải lên ${i + 1}/${M.rows.length}: ${r.fileName}`);
+        r.uploaded ||= await ttUpload(r);          // lỗi giữa chừng → bấm Lưu lại, file đã lên không tải lại
+        items.push({...r.uploaded, filename: r.fileName, ...ttFields(r)});
+      }
+      mMsg("Đang lưu…");
+      await api("/api/tiktok/videos", {method: "POST", body: JSON.stringify({items})});
+    }
+    M.busy = false; ttClose(true);
+    ttLoad();
+  } catch (e) { M.busy = false; mSync(); mMsg("Lỗi: " + e.message, true); }
+};
+function ttClose(force = false) {
+  if (!force && M.busy) return;
+  if (!force && M.mode === "add" && M.rows.length && !confirm("Bỏ các video chưa lưu?")) return;
+  M.rows.forEach(r => r.file && URL.revokeObjectURL(r.url));
+  M.rows = [];
+  $("#ttModal").close();
+}
+$("#ttModal").addEventListener("cancel", e => { e.preventDefault(); ttClose(); });
+$("#ttModal").addEventListener("click", e => { if (e.target.closest("[data-close]")) ttClose(); });
+
+const drop = $("#mDrop");
+drop.onclick = () => $("#mFile").click();
+$("#mFile").onchange = e => { mAddFiles(e.target.files); e.target.value = ""; };
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); e.stopPropagation(); drop.classList.remove("over"); mAddFiles(e.dataTransfer.files); });
+// thả file ra ngoài vùng drop: đừng để trình duyệt mở file; ở tab TikTok thì mở luôn modal thêm
+const hasFiles = e => [...(e.dataTransfer?.types || [])].includes("Files");
+window.addEventListener("dragover", e => { if (hasFiles(e)) e.preventDefault(); });
+window.addEventListener("drop", e => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  if (!document.body.classList.contains("view-tt")) return;
+  if (!$("#ttModal").open) ttOpen(null);
+  if (M.mode === "add") mAddFiles(e.dataTransfer.files);
+});
+
+function setAdv(on) {
+  document.body.classList.toggle("adv", on); if (!on) tab("s");
+}
+// Nâng cao: ẩn khỏi giao diện, chỉ mở bằng link ...:8765/?adv=1
+setAdv(new URLSearchParams(location.search).has("adv"));
+setView(store.get("view") === "tt" && !location.hash ? "tt" : "voice");
+loadMeta().then(() => {
+  const p = new URLSearchParams(location.hash.slice(1)).get("p");   // link chia sẻ bài: #p=<tên>
+  if (p) openProject(p).catch(() => history.replaceState(null, "", location.pathname));
+}).catch(e => msg(e.message, true));
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+#!/bin/zsh
+# ./rv prep|audition|pick|say …  → voicebuild.py
+# ./rv render|redo …             → render.py
+# ./rv web [port]                → giao diện web http://127.0.0.1:8765
+PY="${RV_PY:-${0:A:h}/.venv/bin/python}"
+case "$1" in
+  render|redo) exec "$PY" "${0:A:h}/render.py" "$@" ;;
+  bench)       shift; exec "$PY" "${0:A:h}/bench.py" "$@" ;;
+  elgen)       shift; exec "$PY" "${0:A:h}/el_gen.py" "$@" ;;
+  web)         shift; exec "$PY" "${0:A:h}/web/app.py" "$@" ;;
+  *)           exec "$PY" "${0:A:h}/voicebuild.py" "$@" ;;
+esac

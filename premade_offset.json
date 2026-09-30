@@ -1,0 +1,50 @@
+{
+  "excited": {
+    "pitch_st": 0.87,
+    "rate": 1.103,
+    "move": 0.03,
+    "loud": 0.1
+  },
+  "curious": {
+    "pitch_st": -0.69,
+    "rate": 1.101,
+    "move": -0.38,
+    "loud": -0.0
+  },
+  "confident": {
+    "pitch_st": 0.6,
+    "rate": 1.084,
+    "move": 0.46,
+    "loud": -0.1
+  },
+  "amazed": {
+    "pitch_st": -1.7,
+    "rate": 1.133,
+    "move": -0.38,
+    "loud": -0.6
+  },
+  "playful": {
+    "pitch_st": 1.2,
+    "rate": 1.093,
+    "move": -0.29,
+    "loud": 0.4
+  },
+  "sad": {
+    "pitch_st": -0.82,
+    "rate": 1.047,
+    "move": 0.03,
+    "loud": -0.8
+  },
+  "whispering": {
+    "pitch_st": 1.3,
+    "rate": 1.071,
+    "move": -0.22,
+    "loud": 0.7
+  },
+  "dramatic": {
+    "pitch_st": -2.03,
+    "rate": 0.965,
+    "move": -0.56,
+    "loud": 0.1
+  }
+}

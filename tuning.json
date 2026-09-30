@@ -1,0 +1,42 @@
+{
+  "tags": {
+    "excited": {
+      "tempo": 1.158,
+      "gain": 2.5
+    },
+    "curious": {
+      "tempo": 1.154,
+      "gain": 1.7
+    },
+    "confident": {
+      "tempo": 1.25,
+      "gain": 0.2
+    },
+    "amazed": {
+      "tempo": 1.209,
+      "gain": 1.4
+    },
+    "playful": {
+      "tempo": 1.087,
+      "gain": 2.1
+    },
+    "sad": {
+      "tempo": 1.225,
+      "gain": -0.3
+    },
+    "whispering": {
+      "tempo": 1.213,
+      "gain": -0.1
+    },
+    "dramatic": {
+      "tempo": 1.25,
+      "gain": 0.9
+    }
+  },
+  "gap_scale": 1.324,
+  "inner_pause_scale": 1.887,
+  "source": {
+    "el": "samples/el_calib.mp3",
+    "script": "samples/calib_script.txt"
+  }
+}
